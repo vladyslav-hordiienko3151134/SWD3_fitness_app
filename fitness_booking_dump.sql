@@ -97,7 +97,7 @@ CREATE TABLE `users` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -106,7 +106,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Vlad','Hord','0598953434','vlad@test.com','','','2026-04-20 18:46:22'),(2,'Mary','Smith','+446995934','mary@test.com','','','2026-04-20 18:46:22'),(3,'Sarah','Coach','0871234567','sarah@s.com','user','password123','2026-04-21 11:26:59');
+INSERT INTO `users` VALUES (1,'Vlad','Hord','0598953434','vlad@test.com','','','2026-04-20 18:46:22'),(2,'Mary','Smith','+446995934','mary@test.com','','','2026-04-20 18:46:22'),(3,'Sarah','Coach','0871234567','sarah@s.com','user','password123','2026-04-21 11:26:59'),(4,'Alex','Toms','087934849','alexh@gamil.com','admin','pass123','2026-04-21 11:54:11');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -119,4 +119,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-21 12:33:21
+-- Dump completed on 2026-04-21 12:55:25
