@@ -1,12 +1,13 @@
 //Mariia Kolodiazhna 3149166
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { createSession } from '@/lib/session';
+import { createSession, SESSION_COOKIE_OPTIONS, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export async function POST(request) {
   try {
     const { email, password } = await request.json();
 
+    //validate required fields
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -28,7 +29,7 @@ export async function POST(request) {
     }
 
     const user = users[0];
-    
+
     //verify password
     if (password !== user.password) {
       return NextResponse.json(
@@ -37,7 +38,7 @@ export async function POST(request) {
       );
     }
 
-    //create session
+    //create session 
     const sessionId = createSession({
       user_id: user.user_id,
       email: user.email,
@@ -58,13 +59,7 @@ export async function POST(request) {
       }
     });
 
-    response.cookies.set('session_id', sessionId, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+    response.cookies.set(SESSION_COOKIE_NAME, sessionId, SESSION_COOKIE_OPTIONS);
 
     return response;
 

@@ -1,7 +1,7 @@
 //Mariia Kolodiazhna 3149166
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { createSession } from '@/lib/session';
+import { createSession, SESSION_COOKIE_OPTIONS, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export async function POST(request) {
   try {
@@ -64,13 +64,7 @@ export async function POST(request) {
       user: user
     }, { status: 201 });
 
-    response.cookies.set('session_id', sessionId, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+    response.cookies.set(SESSION_COOKIE_NAME, sessionId, SESSION_COOKIE_OPTIONS);
 
     return response;
 

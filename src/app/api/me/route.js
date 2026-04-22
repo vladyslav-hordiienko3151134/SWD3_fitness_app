@@ -1,23 +1,12 @@
 //Mariia Kolodiazhna 3149166
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { getSessionFromRequest } from '@/lib/session';
 import pool from '@/lib/db';
 
 export async function GET(request) {
   try {
-    const sessionId = request.cookies.get('session_id')?.value;
-    
-    //if no responding cookie, user is not logged in
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    const { session } = getSessionFromRequest(request);
 
-    //validtae session
-    const session = getSession(sessionId);
-    
     //if session expired reject requet
     if (!session) {
       return NextResponse.json(

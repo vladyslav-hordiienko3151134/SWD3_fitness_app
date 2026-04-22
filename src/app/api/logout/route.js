@@ -1,22 +1,22 @@
 //Mariia Kolodiazhna 3149166
 import { NextResponse } from 'next/server';
-import { deleteSession } from '@/lib/session';
+import { deleteSession, getSessionFromRequest, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export async function POST(request) {
-  //get session
-    const sessionId = request.cookies.get('session_id')?.value;
-  
-  //make session invalid
-    if (sessionId) {
-        deleteSession(sessionId);
-    }
-  
-    const response = NextResponse.json({
-        success: true,
-        message: 'Logout successful'
-    });
-  
-    response.cookies.delete('session_id');
-  
-    return response;
+  const { sessionId } = getSessionFromRequest(request);
+
+  //delete session from storage if it exists
+  if (sessionId) {
+    deleteSession(sessionId);
+  }
+
+  //clear session cookie and return success
+  const response = NextResponse.json({
+    success: true,
+    message: 'Logout successful'
+  });
+
+  response.cookies.delete(SESSION_COOKIE_NAME);
+
+  return response;
 }
