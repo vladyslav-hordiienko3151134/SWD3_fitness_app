@@ -2,8 +2,8 @@
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/session';
 
-//middleware to enforce authentication on protected API routes
-export function middleware(request) {
+//proxy to enforce authentication on protected API routes
+export function proxy(request) {
   const pathname = request.nextUrl.pathname;
 
   //routes that require a valid session
@@ -65,7 +65,7 @@ export function middleware(request) {
   return NextResponse.next();
 }
 
-//apply middleware to all API routes
+//apply proxy to all API routes
 export const config = {
   matcher: ['/api/:path*'],
 };
