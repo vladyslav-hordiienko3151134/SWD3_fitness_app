@@ -41,7 +41,7 @@ export default function EventsPage() {
 
   // deleting event
   const handleDelete = async (eventId) => {
-    if (!confirm('Delete this event? All bookings will be lost.')) return;
+    if (!confirm('Delete this event?')) return;
     const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' });
     if (res.ok) {
       fetchEvents();
