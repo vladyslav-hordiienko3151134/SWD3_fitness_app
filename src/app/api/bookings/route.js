@@ -3,6 +3,17 @@ import pool from '@/lib/db';
 import {getSessionFromRequest} from '@/lib/session';
 import {validateBooking} from '@/lib/validation';
 
+//Sofiia Vedenieva
+// hvalidating bookings
+function validateBookingUpdate(data) {
+    const errors = {};
+    if (data.status && !['confirmed', 'cancelled', 'attended'].includes(data.status)) {
+        errors.status = 'Status must be confirmed, cancelled or attended';
+    }
+    return { isValid: Object.keys(errors).length === 0, errors };
+}
+
+//Ivan Spinko
 // GET – read user's own bookings
 export async function GET(request) {
     try {
@@ -125,5 +136,151 @@ export async function POST(request) {
     } catch (error) {
         console.error(error);
         return NextResponse.json({error: 'Server error'}, {status: 500});
+    }
+}
+//Sofiia Vedenieva
+// PUT 
+export async function PUT(request, { params }) {
+    try {
+        const { session } = getSessionFromRequest(request);
+        if (!session) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+
+        const bookingId = parseInt(params.id);
+        if (isNaN(bookingId)) {
+            return NextResponse.json({ error: 'Invalid booking ID' }, { status: 400 });
+        }
+
+        const body = await request.json();
+        const { isValid, errors } = validateBookingUpdate(body);
+        if (!isValid) {
+            return NextResponse.json({ error: 'Validation error', details: errors }, { status: 400 });
+        }
+
+        const connection = await pool.getConnection();
+        try {
+            // connecting event details with booking id
+            const [bookings] = await connection.execute(
+                `SELECT b.*, e.event_date, e.current_bookings, e.capacity
+                 FROM bookings b
+                 JOIN events e ON b.event_id = e.event_id
+                 WHERE b.booking_id = ?`,
+                [bookingId]
+            );
+            if (bookings.length === 0) {
+                return NextResponse.json({ error: 'Booking is not found, please try again' }, { status: 404 });
+            }
+            const booking = bookings[0];
+
+            //admmin can change status
+            if (session.role !== 'admin') {
+                return NextResponse.json({ error: 'Admin access required to update booking status' }, { status: 403 });
+            }
+
+            // if cancelling updating capacity
+            if (body.status === 'cancelled' && booking.status !== 'cancelled') {
+                await connection.execute(
+                    'UPDATE events SET current_bookings = current_bookings - 1 WHERE event_id = ?',
+                    [booking.event_id]
+                );
+            } else if (body.status === 'confirmed' && booking.status === 'cancelled') {
+                // checking capacity
+                const [event] = await connection.execute(
+                    'SELECT current_bookings, capacity FROM events WHERE event_id = ?',
+                    [booking.event_id]
+                );
+                if (event[0].current_bookings >= event[0].capacity) {
+                    return NextResponse.json({ error: 'Event is fully booked, try again later ' }, { status: 400 });
+                }
+                await connection.execute(
+                    'UPDATE events SET current_bookings = current_bookings + 1 WHERE event_id = ?',
+                    [booking.event_id]
+                );
+            }
+
+            await connection.execute(
+                'UPDATE bookings SET status = ? WHERE booking_id = ?',
+                [body.status, bookingId]
+            );
+
+            const [updated] = await connection.execute(
+                'SELECT * FROM bookings WHERE booking_id = ?',
+                [bookingId]
+            );
+            return NextResponse.json({ message: 'Booking updated', booking: updated[0] });
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: 'Error' }, { status: 500 });
+    }
+}
+
+// DELETE 
+export async function DELETE(request, { params }) {
+    try {
+        const { session } = getSessionFromRequest(request);
+        if (!session) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+
+        const bookingId = parseInt(params.id);
+        if (isNaN(bookingId)) {
+            return NextResponse.json({ error: 'Invalid booking ID' }, { status: 400 });
+        }
+
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // fetching booking with event details
+            const [bookings] = await connection.execute(
+                `SELECT b.*, e.event_date, e.current_bookings
+                 FROM bookings b
+                 JOIN events e ON b.event_id = e.event_id
+                 WHERE b.booking_id = ? FOR UPDATE`,
+                [bookingId]
+            );
+            if (bookings.length === 0) {
+                await connection.rollback();
+                return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+            }
+            const booking = bookings[0];
+
+            // user owns booking 
+            if (session.role !== 'admin' && booking.user_id !== session.user_id) {
+                await connection.rollback();
+                return NextResponse.json({ error: 'You can only cancel your own bookings' }, { status: 403 });
+            }
+
+            // checking if event is gone
+            const today = new Date().toISOString().split('T')[0];
+            if (booking.event_date < today) {
+                await connection.rollback();
+                return NextResponse.json({ error: 'Cannot cancel finished events' }, { status: 400 });
+            }
+
+            // deleting booking
+            if (booking.status === 'confirmed') {
+                await connection.execute(
+                    'UPDATE events SET current_bookings = current_bookings - 1 WHERE event_id = ?',
+                    [booking.event_id]
+                );
+            }
+            await connection.execute('DELETE FROM bookings WHERE booking_id = ?', [bookingId]);
+
+            await connection.commit();
+            return NextResponse.json({ message: 'Booking cancelled successfully' });
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: 'Error' }, { status: 500 });
     }
 }
