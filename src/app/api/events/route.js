@@ -1,24 +1,33 @@
-import {NextResponse} from 'next/server';
+import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import {getSessionFromRequest} from '@/lib/session';
-import {validateEvent} from "@/lib/validation";
+import { getSessionFromRequest } from '@/lib/session';
+import { validateEvent } from "@/lib/validation";
+
 // GET – read all events
 export async function GET(request) {
     try {
         const connection = await pool.getConnection();
         const [events] = await connection.execute(`
-            SELECT e.*,
-                   u.username AS organizer_name,
-                   CASE
-                       WHEN e.current_bookings >= e.capacity THEN 'full'
-                       WHEN e.event_date < CURDATE() THEN 'past'
-                       ELSE 'available'
-                       END    AS status
-            FROM events e
-                     LEFT JOIN users u ON e.created_by = u.user_id
-            WHERE e.event_date >= CURDATE()
-               OR e.event_date IS NULL
-            ORDER BY e.event_date ASC, e.start_time ASC
+            SELECT 
+                class_id as event_id,
+                title,
+                start_time as event_date_time,
+                DATE(start_time) as event_date,
+                TIME(start_time) as start_time,
+                end_time,
+                location,
+                trainer_name as instructor_name,
+                max_capacity as capacity,
+                current_bookings,
+                CASE
+                    WHEN current_bookings >= max_capacity THEN 'full'
+                    WHEN DATE(start_time) < CURDATE() THEN 'past'
+                    ELSE 'available'
+                END AS status
+            FROM fitness_classes
+            WHERE DATE(start_time) >= CURDATE()
+               OR DATE(start_time) IS NULL
+            ORDER BY start_time ASC
         `);
         connection.release();
         return NextResponse.json({ events });
@@ -50,28 +59,38 @@ export async function POST(request) {
         }
 
         const connection = await pool.getConnection();
+        
+        // Combine date and time for start_time
+        const startDateTime = `${body.event_date} ${body.start_time}:00`;
+        const endDateTime = `${body.event_date} ${body.end_time}:00`;
 
-        //inserting event
+        //inserting event into fitness_classes table
         const [result] = await connection.execute(
-            `INSERT INTO events
-             (title, description, instructor_name, event_date, start_time, end_time, location, capacity, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO fitness_classes
+             (title, start_time, end_time, location, trainer_name, max_capacity, current_bookings)
+             VALUES (?, ?, ?, ?, ?, ?, 0)`,
             [
                 body.title,
-                body.description || null,
-                body.instructor_name,
-                body.event_date,
-                body.start_time,
-                body.end_time,
+                startDateTime,
+                endDateTime,
                 body.location,
-                body.capacity,
-                session.user_id
+                body.instructor_name,
+                body.capacity
             ]
         );
 
         //fetch and return new event
         const [newEvent] = await connection.execute(
-            'SELECT * FROM events WHERE event_id = ?',
+            `SELECT 
+                class_id as event_id,
+                title,
+                DATE(start_time) as event_date,
+                TIME(start_time) as start_time,
+                end_time,
+                location,
+                trainer_name as instructor_name,
+                max_capacity as capacity
+            FROM fitness_classes WHERE class_id = ?`,
             [result.insertId]
         );
         connection.release();
@@ -87,15 +106,17 @@ export async function POST(request) {
 }
 //Sofiia Vedenieva
 
-// UPDATE 
-export async function PUT(request, { params }) {
+// UPDATE
+export async function PUT(request) {
     try {
         const { session } = getSessionFromRequest(request);
         if (!session || (session.role !== 'organizer' && session.role !== 'admin')) {
             return NextResponse.json({ error: 'Organizer or admin access required' }, { status: 403 });
         }
 
-        const event_id = parseInt(params.id);
+        //getting id by url
+        const { searchParams } = new URL(request.url);
+        const event_id = parseInt(searchParams.get('id'));
         if (isNaN(event_id)) {
             return NextResponse.json({ error: 'Invalid event ID, please try again' }, { status: 400 });
         }
@@ -113,19 +134,20 @@ export async function PUT(request, { params }) {
 
         const connection = await pool.getConnection();
         try {
-            //checking if exists
+            //checking if exists in fitness_classes
             const [found_events] = await connection.execute(
-                'SELECT * FROM events WHERE event_id = ?',
+                'SELECT * FROM fitness_classes WHERE class_id = ?',
                 [event_id]
             );
             if (found_events.length === 0) {
-                return NextResponse.json({ error: 'event is not found' }, { status: 404 });
+                return NextResponse.json({ error: 'Event is not found' }, { status: 404 });
             }
             const existing_event = found_events[0];
 
-            // only organisers  can edit their own events(admin)
-            if (session.role !== 'admin' && existing_event.created_by !== session.user_id) {
-                return NextResponse.json({ error: 'you can only edit your own events' }, { status: 403 });
+            // only organisers can edit their own events
+            //admin can edit all events (created_by doesn't exist in fitness_classes, so admin only)
+            if (session.role !== 'admin') {
+                return NextResponse.json({ error: 'Admin access required to edit' }, { status: 403 });
             }
 
             const update_fields = [];
@@ -136,54 +158,61 @@ export async function PUT(request, { params }) {
                 query_values.push(request_body.title);
             }
             if (request_body.description !== undefined) {
-                update_fields.push('description = ?');
-                query_values.push(request_body.description);
+                // description doesn't exist in fitness_classes, skip
             }
             if (request_body.instructor_name !== undefined) {
-                update_fields.push('instructor_name = ?');
+                update_fields.push('trainer_name = ?');
                 query_values.push(request_body.instructor_name);
             }
-            if (request_body.event_date !== undefined) {
-                update_fields.push('event_date = ?');
-                query_values.push(request_body.event_date);
-            }
-            if (request_body.start_time !== undefined) {
+            if (request_body.event_date !== undefined && request_body.start_time !== undefined) {
+                const newDateTime = `${request_body.event_date} ${request_body.start_time}:00`;
                 update_fields.push('start_time = ?');
-                query_values.push(request_body.start_time);
+                query_values.push(newDateTime);
             }
-            if (request_body.end_time !== undefined) {
+            if (request_body.end_time !== undefined && request_body.event_date !== undefined) {
+                const newEndDateTime = `${request_body.event_date} ${request_body.end_time}:00`;
                 update_fields.push('end_time = ?');
-                query_values.push(request_body.end_time);
+                query_values.push(newEndDateTime);
             }
             if (request_body.location !== undefined) {
                 update_fields.push('location = ?');
                 query_values.push(request_body.location);
             }
             if (request_body.capacity !== undefined) {
-               // new capacity shoud be more than previous one
+               // new capacity should not be less than current bookings
                 if (request_body.capacity < existing_event.current_bookings) {
                     return NextResponse.json({
                         error: `Capacity cannot be less than current bookings (${existing_event.current_bookings})`
                     }, { status: 400 });
                 }
-                update_fields.push('capacity = ?');
+                update_fields.push('max_capacity = ?');
                 query_values.push(request_body.capacity);
             }
 
             if (update_fields.length === 0) {
-                return NextResponse.json({ error: 'no fields needs to update' }, { status: 400 });
+                return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
             }
 
             //updating with SQL
             query_values.push(event_id);
             await connection.execute(
-                `UPDATE events SET ${update_fields.join(', ')} WHERE event_id = ?`,
+                `UPDATE fitness_classes SET ${update_fields.join(', ')} WHERE class_id = ?`,
                 query_values
             );
 
-            // fwtching update 
+            // fetching updated event
             const [updated_event] = await connection.execute(
-                'SELECT * FROM events WHERE event_id = ?',
+                `SELECT 
+                    class_id as event_id,
+                    title,
+                    DATE(start_time) as event_date,
+                    TIME(start_time) as start_time,
+                    end_time,
+                    location,
+                    trainer_name as instructor_name,
+                    max_capacity as capacity,
+                    current_bookings
+                FROM fitness_classes WHERE class_id = ?`,
                 [event_id]
             );
 
@@ -193,50 +222,51 @@ export async function PUT(request, { params }) {
         }
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: 'Error' }, { status: 500 });
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
-// DELETE 
-export async function DELETE(request, { params }) {
+//DELETE
+export async function DELETE(request) {
     try {
         const { session } = getSessionFromRequest(request);
         if (!session || (session.role !== 'organizer' && session.role !== 'admin')) {
             return NextResponse.json({ error: 'Organizer or admin access required' }, { status: 403 });
         }
 
-        const event_id = parseInt(params.id);
+        // getting event id from url query 
+        const { searchParams } = new URL(request.url);
+        const event_id = parseInt(searchParams.get('id'));
         if (isNaN(event_id)) {
             return NextResponse.json({ error: 'Invalid event ID' }, { status: 400 });
         }
 
         const connection = await pool.getConnection();
         try {
-            // checking exositance and permission
+            // checking existence and permission
             const [found_events] = await connection.execute(
-                'SELECT * FROM events WHERE event_id = ?',
+                'SELECT * FROM fitness_classes WHERE class_id = ?',
                 [event_id]
             );
             if (found_events.length === 0) {
                 return NextResponse.json({ error: 'Event not found' }, { status: 404 });
             }
             const existing_event = found_events[0];
-            if (session.role !== 'admin' && existing_event.created_by !== session.user_id) {
-                return NextResponse.json({ error: 'You can only delete your own events' }, { status: 403 });
+            if (session.role !== 'admin') {
+                return NextResponse.json({ error: 'Admin access required to delete' }, { status: 403 });
             }
 
-            //  deletion permitted if there are any bookings
             const [booking_count] = await connection.execute(
-                'SELECT COUNT(*) AS number_of_bookings FROM bookings WHERE event_id = ?',
+                'SELECT COUNT(*) AS number_of_bookings FROM bookings WHERE class_id = ?',
                 [event_id]
             );
             if (booking_count[0].number_of_bookings > 0) {
                 return NextResponse.json({
-                    error: 'Cannot delete event with existing bookings. Cancel all bookings first.'
+                    error: 'Cannot delete event with existing bookings, all booking must be cancelled'
                 }, { status: 409 });
             }
 
-            await connection.execute('DELETE FROM events WHERE event_id = ?', [event_id]);
+            await connection.execute('DELETE FROM fitness_classes WHERE class_id = ?', [event_id]);
             return NextResponse.json({ message: 'Event deleted successfully' });
         } finally {
             connection.release();

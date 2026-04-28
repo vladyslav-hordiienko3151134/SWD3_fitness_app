@@ -1,10 +1,10 @@
-import {NextResponse} from 'next/server';
+import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import {getSessionFromRequest} from '@/lib/session';
-import {validateBooking} from '@/lib/validation';
+import { getSessionFromRequest } from '@/lib/session';
+import { validateBooking } from '@/lib/validation';
 
 //Sofiia Vedenieva
-// hvalidating bookings
+// validating booking status updates
 function validateBookingUpdate(data) {
     const errors = {};
     if (data.status && !['confirmed', 'cancelled', 'attended'].includes(data.status)) {
@@ -17,56 +17,51 @@ function validateBookingUpdate(data) {
 // GET – read user's own bookings
 export async function GET(request) {
     try {
-        const {session} = getSessionFromRequest(request);
+        const { session } = getSessionFromRequest(request);
         if (!session) {
-            return NextResponse.json({error: 'Authentication required'}, {status: 401});
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
         const connection = await pool.getConnection();
         try {
             const [bookings] = await connection.execute(
-                `SELECT b.*,
-                        e.title,
-                        e.event_date,
-                        e.start_time,
-                        e.end_time,
-                        e.location,
-                        e.instructor_name,
-                        e.capacity,
-                        e.current_bookings,
-                        CASE
-                            WHEN e.event_date < CURDATE() THEN 'past'
-                            WHEN b.status = 'cancelled' THEN 'cancelled'
-                            ELSE 'upcoming'
-                            END AS booking_status
+               `SELECT b.*,
+                        fc.title,
+                        DATE(fc.start_time) as event_date,
+                        TIME(fc.start_time) as start_time,
+                        fc.end_time,
+                        fc.location,
+                        fc.trainer_name as instructor_name,
+                        fc.max_capacity as capacity,
+                        fc.current_bookings
                  FROM bookings b
-                          JOIN events e ON b.event_id = e.event_id
+                 JOIN fitness_classes fc ON b.class_id = fc.class_id
                  WHERE b.user_id = ?
-                 ORDER BY e.event_date ASC, e.start_time ASC`,
+                 ORDER BY fc.start_time ASC`,
                 [session.user_id]
             );
-            return NextResponse.json({bookings});
+            return NextResponse.json({ bookings });
         } finally {
             connection.release();
         }
     } catch (error) {
         console.error(error);
-        return NextResponse.json({error: 'Server error'}, {status: 500});
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 
 // POST – create a new booking
 export async function POST(request) {
     try {
-        const {session} = getSessionFromRequest(request);
+        const { session } = getSessionFromRequest(request);
         if (!session) {
-            return NextResponse.json({error: 'Authentication required'}, {status: 401});
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
         const body = await request.json();
-        const {isValid, errors} = validateBooking(body);
+        const { isValid, errors } = validateBooking(body);
         if (!isValid) {
-            return NextResponse.json({error: 'Validation failed', details: errors}, {status: 400});
+            return NextResponse.json({ error: 'Validation failed', details: errors }, { status: 400 });
         }
 
         const connection = await pool.getConnection();
@@ -80,7 +75,7 @@ export async function POST(request) {
             );
             if (event.length === 0) {
                 await connection.rollback();
-                return NextResponse.json({error: 'Event not found'}, {status: 404});
+                return NextResponse.json({ error: 'Event not found' }, { status: 404 });
             }
 
             const eventData = event[0];
@@ -89,12 +84,12 @@ export async function POST(request) {
 
             if (new Date(eventData.event_date) < today) {
                 await connection.rollback();
-                return NextResponse.json({error: 'Cannot book past events'}, {status: 400});
+                return NextResponse.json({ error: 'Cannot book past events' }, { status: 400 });
             }
 
             if (eventData.current_bookings >= eventData.capacity) {
                 await connection.rollback();
-                return NextResponse.json({error: 'Event is fully booked'}, {status: 400});
+                return NextResponse.json({ error: 'Event is fully booked' }, { status: 400 });
             }
 
             const [existing] = await connection.execute(
@@ -103,7 +98,7 @@ export async function POST(request) {
             );
             if (existing.length > 0) {
                 await connection.rollback();
-                return NextResponse.json({error: 'Already booked this event'}, {status: 409});
+                return NextResponse.json({ error: 'Already booked this event' }, { status: 409 });
             }
 
             const [result] = await connection.execute(
@@ -127,27 +122,28 @@ export async function POST(request) {
             );
 
             return NextResponse.json(
-                {message: 'Booking created successfully', booking: newBooking[0]},
-                {status: 201}
+                { message: 'Booking created successfully', booking: newBooking[0] },
+                { status: 201 }
             );
         } finally {
             connection.release();
         }
     } catch (error) {
         console.error(error);
-        return NextResponse.json({error: 'Server error'}, {status: 500});
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
 //Sofiia Vedenieva
-// PUT 
-export async function PUT(request, { params }) {
+export async function PUT(request) {
     try {
         const { session } = getSessionFromRequest(request);
         if (!session) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        const bookingId = parseInt(params.id);
+        // reading booking id from URL search param
+        const { searchParams } = new URL(request.url);
+        const bookingId = parseInt(searchParams.get('id'));
         if (isNaN(bookingId)) {
             return NextResponse.json({ error: 'Invalid booking ID' }, { status: 400 });
         }
@@ -173,25 +169,25 @@ export async function PUT(request, { params }) {
             }
             const booking = bookings[0];
 
-            //admmin can change status
+            //admin can change status
             if (session.role !== 'admin') {
                 return NextResponse.json({ error: 'Admin access required to update booking status' }, { status: 403 });
             }
 
-            // if cancelling updating capacity
+            // if cancelling, update capacity
             if (body.status === 'cancelled' && booking.status !== 'cancelled') {
                 await connection.execute(
                     'UPDATE events SET current_bookings = current_bookings - 1 WHERE event_id = ?',
                     [booking.event_id]
                 );
             } else if (body.status === 'confirmed' && booking.status === 'cancelled') {
-                // checking capacity
+                // checking capacity before restoring
                 const [event] = await connection.execute(
                     'SELECT current_bookings, capacity FROM events WHERE event_id = ?',
                     [booking.event_id]
                 );
                 if (event[0].current_bookings >= event[0].capacity) {
-                    return NextResponse.json({ error: 'Event is fully booked, try again later ' }, { status: 400 });
+                    return NextResponse.json({ error: 'Event is fully booked, please try again later' }, { status: 400 });
                 }
                 await connection.execute(
                     'UPDATE events SET current_bookings = current_bookings + 1 WHERE event_id = ?',
@@ -219,14 +215,16 @@ export async function PUT(request, { params }) {
 }
 
 // DELETE 
-export async function DELETE(request, { params }) {
+export async function DELETE(request) {
     try {
         const { session } = getSessionFromRequest(request);
         if (!session) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        const bookingId = parseInt(params.id);
+        // reading booking id from URL search param
+        const { searchParams } = new URL(request.url);
+        const bookingId = parseInt(searchParams.get('id'));
         if (isNaN(bookingId)) {
             return NextResponse.json({ error: 'Invalid booking ID' }, { status: 400 });
         }
@@ -249,20 +247,20 @@ export async function DELETE(request, { params }) {
             }
             const booking = bookings[0];
 
-            // user owns booking 
+            // user owns booking
             if (session.role !== 'admin' && booking.user_id !== session.user_id) {
                 await connection.rollback();
                 return NextResponse.json({ error: 'You can only cancel your own bookings' }, { status: 403 });
             }
 
-            // checking if event is gone
+            // checking if event is in the past
             const today = new Date().toISOString().split('T')[0];
             if (booking.event_date < today) {
                 await connection.rollback();
                 return NextResponse.json({ error: 'Cannot cancel finished events' }, { status: 400 });
             }
 
-            // deleting booking
+            // deleting booking and freeing up a spot if it was confirmed
             if (booking.status === 'confirmed') {
                 await connection.execute(
                     'UPDATE events SET current_bookings = current_bookings - 1 WHERE event_id = ?',
@@ -281,6 +279,5 @@ export async function DELETE(request, { params }) {
         }
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: 'Error' }, { status: 500 });
     }
 }
