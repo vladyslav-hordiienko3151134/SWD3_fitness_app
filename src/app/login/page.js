@@ -14,7 +14,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -22,7 +22,7 @@ export default function LoginPage() {
     const data = await res.json();
 
     if (res.ok) {
-      router.push('/');
+      window.location.href = '/';
     } else {
       setError(data.error || 'Login failed');
     }

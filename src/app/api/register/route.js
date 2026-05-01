@@ -2,24 +2,17 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { createSession, SESSION_COOKIE_OPTIONS, SESSION_COOKIE_NAME } from '@/lib/session';
+import { validateUser, hashPassword } from '@/lib/validation';
 
 export async function POST(request) {
   try {
-    const { first_name, last_name, phone, email, password } = await request.json();
+    const body = await request.json();
+    const { first_name, last_name, phone, email, password } = body;
 
     //validation
-    if (!first_name || !last_name || !phone || !email || !password) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      );
+    const { isValid, errors } = validateUser(body);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Validation failed', details: errors }, { status: 400 });
     }
 
     //check if user exists
@@ -35,11 +28,14 @@ export async function POST(request) {
       );
     }
 
+    //hash password before saving
+    const hashedPassword = await hashPassword(password);
+
     //create user
     const [result] = await pool.query(
       `INSERT INTO users (first_name, last_name, phone, email, password, role) 
        VALUES (?, ?, ?, ?, ?, 'user')`,
-      [first_name, last_name, phone, email, password]
+      [first_name, last_name, phone, email, hashedPassword]
     );
 
     //fetch created user
@@ -71,7 +67,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: `Registration error: ${error.message}` },
       { status: 500 }
     );
   }

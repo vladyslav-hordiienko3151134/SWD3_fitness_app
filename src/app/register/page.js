@@ -22,7 +22,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
@@ -30,7 +30,7 @@ export default function RegisterPage() {
     const data = await res.json();
 
     if (res.ok) {
-      router.push('/');
+      window.location.href = '/';
     } else {
       setError(data.error || 'Registration failed');
     }

@@ -2,17 +2,17 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { createSession, SESSION_COOKIE_OPTIONS, SESSION_COOKIE_NAME } from '@/lib/session';
+import { validateLogin, comparePassword } from '@/lib/validation';
 
 export async function POST(request) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { email, password } = body;
 
     //validate required fields
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+    const { isValid, errors } = validateLogin(body);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Validation failed', details: errors }, { status: 400 });
     }
 
     //fetch user
@@ -31,7 +31,8 @@ export async function POST(request) {
     const user = users[0];
 
     //verify password
-    if (password !== user.password) {
+    const isPasswordCorrect = await comparePassword(password, user.password);
+    if (!isPasswordCorrect) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
