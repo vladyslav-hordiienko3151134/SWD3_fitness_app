@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
           <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', background: '#f0f0f0', alignItems: 'center' }}>
             <Link href="/events">Events</Link>
             {user?.role === 'organizer' && <Link href="/events/create">Create Event</Link>}
-            {user?.role === 'user' && <Link href="/my-bookings">My Bookings</Link>}
+            {user?.role === 'user' && <Link href="/my-booking">My booking</Link>}
             {user?.role === 'admin' && (
               <>
                 <Link href="/admin/users">Manage Users</Link>

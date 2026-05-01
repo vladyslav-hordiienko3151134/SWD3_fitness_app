@@ -4,13 +4,21 @@ import { useEffect, useState } from 'react';
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // fetch user's bookings
   const fetchBookings = async () => {
-    const res = await fetch('/api/bookings');
-    const data = await res.json();
-    setBookings(data.bookings || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/bookings');
+      if (res.ok) {
+        const data = await res.json();
+        setBookings(data.bookings || []);
+      }
+    } catch (err) {
+      console.error('Fetch bookings error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -20,7 +28,7 @@ export default function MyBookingsPage() {
   // cancelling a booking
   const cancelBooking = async (bookingId) => {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
-    const res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/bookings?id=${bookingId}`, { method: 'DELETE' });
     if (res.ok) {
       fetchBookings();
     } else {

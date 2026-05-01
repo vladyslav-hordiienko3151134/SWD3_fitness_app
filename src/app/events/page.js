@@ -6,20 +6,34 @@ import Link from 'next/link';
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
   // fetching events and current user
   const fetchEvents = async () => {
-    const res = await fetch('/api/events');
-    const data = await res.json();
-    setEvents(data.events || []);
+    try {
+      const res = await fetch('/api/events');
+      const data = await res.json();
+      setEvents(data.events || []);
+    } catch (err) {
+      console.error('Fetch events error:', err);
+    }
   };
 
   useEffect(() => {
-    fetch('/api/user/me')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => setUser(data?.user));
-    fetchEvents().then(() => setLoading(false));
+    const init = async () => {
+      try {
+        const userRes = await fetch('/api/me');
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUser(userData.user);
+        }
+        await fetchEvents();
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   // booking event
@@ -42,7 +56,7 @@ export default function EventsPage() {
   // deleting event
   const handleDelete = async (eventId) => {
     if (!confirm('Delete this event?')) return;
-    const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/events?id=${eventId}`, { method: 'DELETE' });
     if (res.ok) {
       fetchEvents();
     } else {
@@ -51,6 +65,7 @@ export default function EventsPage() {
     }
   };
 
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div>
@@ -59,8 +74,8 @@ export default function EventsPage() {
       {events.length === 0 && <p>No events found.</p>}
       {events.map(event => {
         const isFullyBooked = event.current_bookings >= event.capacity;
-        const isPast = new Date(event.event_date) < new Date();
-        const canBook = user?.role === 'attendee' && !isFullyBooked && !isPast;
+        const isPast = new Date(event.event_date_time) < new Date();
+        const canBook = user && user.role === 'user' && !isFullyBooked && !isPast;
 
         return (
           <div key={event.event_id}>
@@ -78,7 +93,6 @@ export default function EventsPage() {
                 <button onClick={() => handleDelete(event.event_id)}>Delete</button>
               </div>
             )}
-            <hr />
           </div>
         );
       })}
