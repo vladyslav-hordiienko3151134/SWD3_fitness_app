@@ -7,8 +7,8 @@ import { validateBooking } from '@/lib/validation';
 // validating booking status updates
 function validateBookingUpdate(data) {
     const errors = {};
-    if (data.status && !['confirmed', 'cancelled', 'attended'].includes(data.status)) {
-        errors.status = 'Status must be confirmed, cancelled or attended';
+    if (data.status && !['confirmed', 'cancelled', 'completed'].includes(data.status)) {
+        errors.status = 'Status must be confirmed, cancelled or completed';
     }
     return { isValid: Object.keys(errors).length === 0, errors };
 }
@@ -64,59 +64,61 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Validation failed', details: errors }, { status: 400 });
         }
 
+        const class_id = body.class_id || body.event_id;
+
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
-            //lock event row to prevent race conditions
-            const [event] = await connection.execute(
-                'SELECT * FROM events WHERE event_id = ? FOR UPDATE',
-                [body.event_id]
+            //lock fitness_classes row to prevent race conditions
+            const [classes] = await connection.execute(
+                'SELECT * FROM fitness_classes WHERE class_id = ? FOR UPDATE',
+                [class_id]
             );
-            if (event.length === 0) {
+            if (classes.length === 0) {
                 await connection.rollback();
                 return NextResponse.json({ error: 'Event not found' }, { status: 404 });
             }
 
-            const eventData = event[0];
+            const classData = classes[0];
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            if (new Date(eventData.event_date) < today) {
+            if (new Date(classData.start_time) < today) {
                 await connection.rollback();
                 return NextResponse.json({ error: 'Cannot book past events' }, { status: 400 });
             }
 
-            if (eventData.current_bookings >= eventData.capacity) {
+            if (classData.current_bookings >= classData.max_capacity) {
                 await connection.rollback();
-                return NextResponse.json({ error: 'Event is fully booked' }, { status: 400 });
+                return NextResponse.json({ error: 'Class is fully booked' }, { status: 400 });
             }
 
             const [existing] = await connection.execute(
-                'SELECT * FROM bookings WHERE user_id = ? AND event_id = ? AND status = "confirmed"',
-                [session.user_id, body.event_id]
+                'SELECT * FROM bookings WHERE user_id = ? AND class_id = ? AND status = "confirmed"',
+                [session.user_id, class_id]
             );
             if (existing.length > 0) {
                 await connection.rollback();
-                return NextResponse.json({ error: 'Already booked this event' }, { status: 409 });
+                return NextResponse.json({ error: 'Already booked this class' }, { status: 409 });
             }
 
             const [result] = await connection.execute(
-                'INSERT INTO bookings (user_id, event_id, status) VALUES (?, ?, "confirmed")',
-                [session.user_id, body.event_id]
+                'INSERT INTO bookings (user_id, class_id, status) VALUES (?, ?, "confirmed")',
+                [session.user_id, class_id]
             );
 
             await connection.execute(
-                'UPDATE events SET current_bookings = current_bookings + 1 WHERE event_id = ?',
-                [body.event_id]
+                'UPDATE fitness_classes SET current_bookings = current_bookings + 1 WHERE class_id = ?',
+                [class_id]
             );
 
             await connection.commit();
 
             const [newBooking] = await connection.execute(
-                `SELECT b.*, e.title, e.event_date, e.start_time, e.end_time
+                `SELECT b.*, fc.title, fc.start_time, fc.end_time
                  FROM bookings b
-                          JOIN events e ON b.event_id = e.event_id
+                 JOIN fitness_classes fc ON b.class_id = fc.class_id
                  WHERE b.booking_id = ?`,
                 [result.insertId]
             );
@@ -125,6 +127,9 @@ export async function POST(request) {
                 { message: 'Booking created successfully', booking: newBooking[0] },
                 { status: 201 }
             );
+        } catch (err) {
+            await connection.rollback();
+            throw err;
         } finally {
             connection.release();
         }
@@ -158,9 +163,9 @@ export async function PUT(request) {
         try {
             // connecting event details with booking id
             const [bookings] = await connection.execute(
-                `SELECT b.*, e.event_date, e.current_bookings, e.capacity
+                `SELECT b.*, fc.current_bookings, fc.max_capacity as capacity
                  FROM bookings b
-                 JOIN events e ON b.event_id = e.event_id
+                 JOIN fitness_classes fc ON b.class_id = fc.class_id
                  WHERE b.booking_id = ?`,
                 [bookingId]
             );
@@ -177,21 +182,16 @@ export async function PUT(request) {
             // if cancelling, update capacity
             if (body.status === 'cancelled' && booking.status !== 'cancelled') {
                 await connection.execute(
-                    'UPDATE events SET current_bookings = current_bookings - 1 WHERE event_id = ?',
-                    [booking.event_id]
+                    'UPDATE fitness_classes SET current_bookings = current_bookings - 1 WHERE class_id = ?',
+                    [booking.class_id]
                 );
             } else if (body.status === 'confirmed' && booking.status === 'cancelled') {
-                // checking capacity before restoring
-                const [event] = await connection.execute(
-                    'SELECT current_bookings, capacity FROM events WHERE event_id = ?',
-                    [booking.event_id]
-                );
-                if (event[0].current_bookings >= event[0].capacity) {
-                    return NextResponse.json({ error: 'Event is fully booked, please try again later' }, { status: 400 });
+                if (booking.current_bookings >= booking.capacity) {
+                    return NextResponse.json({ error: 'Class is fully booked' }, { status: 400 });
                 }
                 await connection.execute(
-                    'UPDATE events SET current_bookings = current_bookings + 1 WHERE event_id = ?',
-                    [booking.event_id]
+                    'UPDATE fitness_classes SET current_bookings = current_bookings + 1 WHERE class_id = ?',
+                    [booking.class_id]
                 );
             }
 
@@ -200,11 +200,7 @@ export async function PUT(request) {
                 [body.status, bookingId]
             );
 
-            const [updated] = await connection.execute(
-                'SELECT * FROM bookings WHERE booking_id = ?',
-                [bookingId]
-            );
-            return NextResponse.json({ message: 'Booking updated', booking: updated[0] });
+            return NextResponse.json({ message: 'Booking updated' });
         } finally {
             connection.release();
         }
@@ -235,9 +231,9 @@ export async function DELETE(request) {
         try {
             // fetching booking with event details
             const [bookings] = await connection.execute(
-                `SELECT b.*, e.event_date, e.current_bookings
+                `SELECT b.*, fc.start_time, fc.current_bookings
                  FROM bookings b
-                 JOIN events e ON b.event_id = e.event_id
+                 JOIN fitness_classes fc ON b.class_id = fc.class_id
                  WHERE b.booking_id = ? FOR UPDATE`,
                 [bookingId]
             );
@@ -250,21 +246,19 @@ export async function DELETE(request) {
             // user owns booking
             if (session.role !== 'admin' && booking.user_id !== session.user_id) {
                 await connection.rollback();
-                return NextResponse.json({ error: 'You can only cancel your own bookings' }, { status: 403 });
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
             }
 
-            // checking if event is in the past
-            const today = new Date().toISOString().split('T')[0];
-            if (booking.event_date < today) {
+            if (new Date(booking.start_time) < new Date()) {
                 await connection.rollback();
-                return NextResponse.json({ error: 'Cannot cancel finished events' }, { status: 400 });
+                return NextResponse.json({ error: 'Cannot cancel past events' }, { status: 400 });
             }
 
             // deleting booking and freeing up a spot if it was confirmed
             if (booking.status === 'confirmed') {
                 await connection.execute(
-                    'UPDATE events SET current_bookings = current_bookings - 1 WHERE event_id = ?',
-                    [booking.event_id]
+                    'UPDATE fitness_classes SET current_bookings = current_bookings - 1 WHERE class_id = ?',
+                    [booking.class_id]
                 );
             }
             await connection.execute('DELETE FROM bookings WHERE booking_id = ?', [bookingId]);
@@ -279,5 +273,6 @@ export async function DELETE(request) {
         }
     } catch (error) {
         console.error(error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
