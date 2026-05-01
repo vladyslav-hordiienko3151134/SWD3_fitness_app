@@ -1,66 +1,86 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
+  const [user, setUser] = useState(null); // state to store user data
+  const [loading, setLoading] = useState(true); // state for loading status
+
+  //checking if user is logged in when the page loads
+  useEffect(() => {
+    fetch('/api/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        setUser(data?.user || null);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+      <h1>Navigation</h1>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <nav>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {/*Link available to everyone*/}
+            <li style={{ marginBottom: '1rem' }}>
+              <Link href="/events" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'blue' }}>
+                All Events
+              </Link>
+            </li>
+
+            {user ? (
+              <>
+                {/*Links for logged in users*/}
+                <li style={{ marginBottom: '1rem' }}>
+                  <Link href="/my-booking" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'blue' }}>
+                    My Bookings
+                  </Link>
+                </li>
+
+                {/*Link only for admins*/}
+                {user.role === 'admin' && (
+                  <li style={{ marginBottom: '1rem' }}>
+                    <Link href="/admin/users" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'red' }}>
+                      Admin: Manage Users
+                    </Link>
+                  </li>
+                )}
+
+                {/*User info and logout*/}
+                <li style={{ marginTop: '2rem' }}>
+                  <p>User: {user.first_name} {user.last_name} ({user.role})</p>
+                  <button onClick={async () => {
+                    await fetch('/api/logout', { method: 'POST' });
+                    window.location.reload();
+                  }}>
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                {/*Links for guests*/}
+                <li style={{ marginBottom: '1rem' }}>
+                  <Link href="/login" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'blue' }}>
+                    Login
+                  </Link>
+                </li>
+                <li style={{ marginBottom: '1rem' }}>
+                  <Link href="/register" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'blue' }}>
+                    Register
+                  </Link>
+                </li>
+              </>
+            )}
+          </ul>
+        </nav>
+      )}
     </div>
   );
 }
