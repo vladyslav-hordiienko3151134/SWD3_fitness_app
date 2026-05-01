@@ -30,7 +30,7 @@ export default function RegisterPage() {
     const data = await res.json();
 
     if (res.ok) {
-      window.location.href = '/';
+      window.location.href = '/my-booking';
     } else {
       setError(data.error || 'Registration failed');
     }
