@@ -1,19 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function EditEventPage({ params }) {
+export default function EditEventPage() {
   const [form, setForm] = useState({});
   const [error, setError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
 
   // fetching current event data
   useEffect(() => {
-    fetch(`/api/events/${params.id}`)
-      .then(res => res.json())
-      .then(data => setForm(data.event));
-  }, [params.id]);
+    if (id) {
+      fetch(`/api/events?id=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.event) setForm(data.event);
+          else setError(data.error || 'Event not found');
+        });
+    }
+  }, [id]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -21,7 +28,7 @@ export default function EditEventPage({ params }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const res = await fetch(`/api/events/${params.id}`, {
+    const res = await fetch(`/api/events?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, capacity: parseInt(form.capacity) }),

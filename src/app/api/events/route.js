@@ -6,7 +6,42 @@ import { validateEvent } from "@/lib/validation";
 // GET – read all events
 export async function GET(request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const eventId = searchParams.get('id');
         const connection = await pool.getConnection();
+
+        if (eventId) {
+            const [events] = await connection.execute(`
+                SELECT 
+                    class_id as event_id,
+                    title,
+                    start_time as event_date_time,
+                    DATE(start_time) as event_date,
+                    TIME(start_time) as start_time,
+                    end_time,
+                    location,
+                    trainer_name as instructor_name,
+                    max_capacity as capacity,
+                    current_bookings
+                FROM fitness_classes
+                WHERE class_id = ?
+            `, [eventId]);
+            connection.release();
+            
+            if (events.length === 0) {
+                return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+            }
+
+            if (events[0].start_time && events[0].start_time.length > 5) {
+                events[0].start_time = events[0].start_time.substring(0, 5);
+            }
+            if (events[0].end_time && events[0].end_time.length > 5) {
+                events[0].end_time = events[0].end_time.substring(0, 5);
+            }
+
+            return NextResponse.json({ event: events[0] });
+        }
+
         const [events] = await connection.execute(`
             SELECT 
                 class_id as event_id,

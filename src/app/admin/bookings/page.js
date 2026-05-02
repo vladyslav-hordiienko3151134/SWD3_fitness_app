@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([]);
@@ -53,6 +55,9 @@ export default function AdminBookingsPage() {
                 {booking.status === 'cancelled' && (
                   <button onClick={() => updateStatus(booking.booking_id, 'confirmed')}>Restore</button>
                 )}
+                <Link href={`/events/edit?id=${booking.class_id}`} style={{ marginLeft: '10px' }}>
+                  Edit Event
+                </Link>
               </td>
             </tr>
           ))}

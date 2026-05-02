@@ -89,7 +89,7 @@ export default function EventsPage() {
             {isPast && <p>Event already took place</p>}
             {(user?.role === 'organizer' || user?.role === 'admin') && (
               <div>
-                <Link href={`/events/edit/${event.event_id}`}>Edit</Link>
+                <Link href={`/events/edit?id=${event.event_id}`}>Edit</Link>
                 <button onClick={() => handleDelete(event.event_id)}>Delete</button>
               </div>
             )}
