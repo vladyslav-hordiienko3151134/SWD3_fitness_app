@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);      
   const [form, setForm] = useState({
     first_name: '',
     last_name: '',
     phone: '',
     email: '',
-    role: 'attendee',
+    password: '',
+    role: 'user',
   });
   const [error, setError] = useState('');
 
@@ -18,7 +20,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/user/search');
       if (!res.ok) throw new Error('Error');
       const data = await res.json();
       setUsers(data.users || []);
@@ -37,17 +39,16 @@ export default function AdminUsersPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     setError('');
-    // password is required
-    const payload = { ...form, password: 'Abc123!' };
+    const payload = { ...form };
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await fetch('/api/admin/user/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok) {
-        setForm({ first_name: '', last_name: '', phone: '', email: '', role: 'attendee' });
+        setForm({ first_name: '', last_name: '', phone: '', email: '', password: '', role: 'user' });
         fetchUsers();
       } else {
         setError(data.message || data.error || 'Creation failed, try again');
@@ -60,7 +61,7 @@ export default function AdminUsersPage() {
   // updating user
   const handleUpdate = async (userId) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/user/update?id=${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editing),
@@ -81,7 +82,7 @@ export default function AdminUsersPage() {
   const handleDelete = async (userId) => {
     if (!confirm('Are you sure u want to delete this user?')) return;
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/user/delete?id=${userId}`, { method: 'DELETE' });
       if (res.ok) {
         fetchUsers();
       } else {
@@ -124,11 +125,18 @@ export default function AdminUsersPage() {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
         />
+        <input
+          placeholder="Password"
+          type="password"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
+        />
         <select
           value={form.role}
           onChange={(e) => setForm({ ...form, role: e.target.value })}
         >
-          <option value="attendee">User</option>
+          <option value="user">User</option>
           <option value="organizer">Organizer</option>
           <option value="admin">Admin</option>
         </select>
@@ -143,6 +151,7 @@ export default function AdminUsersPage() {
             <th>ID</th>
             <th>Name</th>
             <th>Email</th>
+            <th>Password</th>
             <th>Role</th>
             <th>Actions</th>
           </tr>
@@ -177,13 +186,23 @@ export default function AdminUsersPage() {
                     />
                   </td>
                   <td>
+                    <input
+                      placeholder="New password (leave blank to keep current)"
+                      type="password"
+                      value={editing.password || ''}
+                      onChange={(e) =>
+                        setEditing({ ...editing, password: e.target.value })
+                      }
+                    />
+                  </td>
+                  <td>
                     <select
                       value={editing.role}
                       onChange={(e) =>
                         setEditing({ ...editing, role: e.target.value })
                       }
                     >
-                      <option value="attendee">Attendee</option>
+                      <option value="user">User</option>
                       <option value="organizer">Organizer</option>
                       <option value="admin">Admin</option>
                     </select>
@@ -199,6 +218,7 @@ export default function AdminUsersPage() {
                   <td>{user.user_id}</td>
                   <td>{user.first_name} {user.last_name}</td>
                   <td>{user.email}</td>
+                  <td>********</td>
                   <td>{user.role}</td>
                   <td>
                     <button onClick={() => setEditing(user)}>Edit</button>

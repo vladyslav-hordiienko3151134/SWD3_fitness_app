@@ -24,22 +24,41 @@ export async function GET(request) {
 
         const connection = await pool.getConnection();
         try {
-            const [bookings] = await connection.execute(
-               `SELECT b.*,
-                        fc.title,
-                        DATE(fc.start_time) as event_date,
-                        TIME(fc.start_time) as start_time,
-                        fc.end_time,
-                        fc.location,
-                        fc.trainer_name as instructor_name,
-                        fc.max_capacity as capacity,
-                        fc.current_bookings
-                 FROM bookings b
-                 JOIN fitness_classes fc ON b.class_id = fc.class_id
-                 WHERE b.user_id = ?
-                 ORDER BY fc.start_time ASC`,
-                [session.user_id]
-            );
+            let query = "";
+            let params = [];
+
+            if (session.role === 'admin') {
+                query = `SELECT b.*,
+                                fc.title,
+                                DATE(fc.start_time) as event_date,
+                                TIME(fc.start_time) as start_time,
+                                fc.end_time,
+                                fc.location,
+                                fc.trainer_name as instructor_name,
+                                CONCAT(u.first_name, ' ', u.last_name) as user_name,
+                                fc.title as event_title
+                         FROM bookings b
+                         JOIN fitness_classes fc ON b.class_id = fc.class_id
+                         JOIN users u ON b.user_id = u.user_id
+                         ORDER BY fc.start_time DESC`;
+            } else {
+                query = `SELECT b.*,
+                                fc.title,
+                                DATE(fc.start_time) as event_date,
+                                TIME(fc.start_time) as start_time,
+                                fc.end_time,
+                                fc.location,
+                                fc.trainer_name as instructor_name,
+                                fc.max_capacity as capacity,
+                                fc.current_bookings
+                         FROM bookings b
+                         JOIN fitness_classes fc ON b.class_id = fc.class_id
+                         WHERE b.user_id = ?
+                         ORDER BY fc.start_time ASC`;
+                params = [session.user_id];
+            }
+
+            const [bookings] = await connection.execute(query, params);
             return NextResponse.json({ bookings });
         } finally {
             connection.release();

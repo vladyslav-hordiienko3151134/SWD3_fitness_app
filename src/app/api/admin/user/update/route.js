@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/session';
+import { hashPassword } from '@/lib/validation';
 
 export async function PUT(request) {
   //check whether admin is logged in, by geting session data from cookie that browser sent us
@@ -34,7 +35,7 @@ export async function PUT(request) {
 
     //check if user with id  exists in database or not
     const [existing] = await pool.query(
-      'SELECT user_id FROM users WHERE user_id = ?',
+      'SELECT user_id, password FROM users WHERE user_id = ?',
       [userId]//query wit parametr
     );
 
@@ -46,12 +47,17 @@ export async function PUT(request) {
       );
     }
 
+    let finalPassword = existing[0].password;
+    if (password && password.trim() !== '') {
+      finalPassword = await hashPassword(password);
+    }
+
 
     //update user in database with new values
     await pool.query(
       `UPDATE users 
        SET first_name = ?, last_name = ?, phone = ?, email = ?, role = ?, password = ?  WHERE user_id = ?`,
-      [first_name, last_name, phone, email, role, password, userId]//parametrs 
+      [first_name, last_name, phone, email, role, finalPassword, userId]//parametrs 
     );
 
     // sending success message back to frontend

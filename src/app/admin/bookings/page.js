@@ -8,7 +8,7 @@ export default function AdminBookingsPage() {
 
   // fetching bookings
   const fetchAllBookings = async () => {
-    const res = await fetch('/api/admin/bookings');
+    const res = await fetch('/api/bookings');
     const data = await res.json();
     setBookings(data.bookings || []);
     setLoading(false);
@@ -20,7 +20,7 @@ export default function AdminBookingsPage() {
 
   // updating booking
   const updateStatus = async (bookingId, newStatus) => {
-    const res = await fetch(`/api/bookings/${bookingId}`, {
+    const res = await fetch(`/api/bookings?id=${bookingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),

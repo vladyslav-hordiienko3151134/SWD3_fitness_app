@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/session';
+import { hashPassword } from '@/lib/validation';
 
 export async function POST(request) {
     //check if admin is logged in by geting session from cookie
@@ -52,10 +53,13 @@ export async function POST(request) {
   //set default role to 'user'
   const userRole = role || 'user';
 
+  // hash password
+  const hashedPassword = await hashPassword(password);
+
   //make insert  of new user into database
   const [result] = await pool.query(
     'INSERT INTO users (first_name, last_name, phone, email, password, role) VALUES (?, ?, ?, ?, ?, ?)',
-    [first_name, last_name, phone || null, email, password, userRole]//parametrs so no sql injection possible
+    [first_name, last_name, phone || null, email, hashedPassword, userRole]//parametrs so no sql injection possible
   );
 
   

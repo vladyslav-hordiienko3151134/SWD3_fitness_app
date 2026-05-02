@@ -45,11 +45,18 @@ export default function Home() {
 
                 {/*Link only for admins*/}
                 {user.role === 'admin' && (
-                  <li style={{ marginBottom: '1rem' }}>
-                    <Link href="/admin/users" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'red' }}>
-                      Admin: Manage Users
-                    </Link>
-                  </li>
+                  <>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <Link href="/admin/users" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'red' }}>
+                        Admin: Manage Users
+                      </Link>
+                    </li>
+                    <li style={{ marginBottom: '1rem' }}>
+                      <Link href="/admin/bookings" style={{ fontSize: '1.1rem', textDecoration: 'none', color: 'red' }}>
+                        Admin: Manage Bookings
+                      </Link>
+                    </li>
+                  </>
                 )}
 
                 {/*User info and logout*/}
