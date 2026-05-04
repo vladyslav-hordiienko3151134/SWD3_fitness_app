@@ -32,8 +32,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        {!hideNav && !loading && (
+        {!loading && (
           <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', background: '#333', color: 'white', alignItems: 'center' }}>
+            {pathname !== '/' && (
+              <Link href="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>Home</Link>
+            )}
             <Link href="/events" style={{ color: 'white', textDecoration: 'none' }}>Events</Link>
             {user?.role === 'organizer' && <Link href="/events/create" style={{ color: 'white', textDecoration: 'none' }}>Create Event</Link>}
             {user?.role === 'user' && <Link href="/my-booking" style={{ color: 'white', textDecoration: 'none' }}>My booking</Link>}
