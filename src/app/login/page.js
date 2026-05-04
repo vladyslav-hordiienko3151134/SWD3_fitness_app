@@ -29,10 +29,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="class">
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
+    <div className="wrap" style={{ display: 'grid', placeItems: 'center', minHeight: '80vh' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Login</h1>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <input
             type="email"
             placeholder="Email"
@@ -40,8 +40,6 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-        </div>
-        <div>
           <input
             type="password"
             placeholder="Password"
@@ -49,11 +47,13 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-        </div>
-        <button type="submit" style={{ padding: '8px 16px' }}>Login</button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <p>No account? <Link href="/register">Register</Link></p>
+          <button type="submit" className="btn">Login</button>
+        </form>
+        {error && <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>{error}</p>}
+        <p style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          No account? <Link href="/register" style={{ color: 'var(--primary)', fontWeight: '600' }}>Register</Link>
+        </p>
+      </div>
     </div>
   );
 }
