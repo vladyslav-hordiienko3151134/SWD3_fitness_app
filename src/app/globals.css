@@ -51,6 +51,49 @@ h1, h2, h3, h4 {
   -webkit-text-fill-color: transparent;
 }
 
+.btn, .btn-alt, button {
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn {
+  background: var(--primary);
+  color: white;
+}
+
+.btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
+}
+
+.btn-alt {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-alt:hover {
+  background: var(--surface-alt);
+}
+
+.btn-big {
+  font-size: 1.1rem !important;
+  padding: 1rem 2.25rem !important;
+  border-radius: 14px !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
