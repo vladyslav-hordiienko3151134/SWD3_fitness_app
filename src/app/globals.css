@@ -94,6 +94,31 @@ h1, h2, h3, h4 {
   border-radius: 14px !important;
 }
 
+.card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 2.5rem;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+input {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: white;
+  outline: none;
+  width: 100%;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
