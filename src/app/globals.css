@@ -1,8 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;600;700;800&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0c10;
+  --surface: #161a22;
+  --surface-alt: #212631;
+  --primary: #a855f7;
+  --primary-hover: #9333ea;
+  --accent: #06b6d4;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border: rgba(255, 255, 255, 0.08);
+  --glass: rgba(10, 12, 16, 0.85);
+  --transition: all 0.2s ease-out;
 }
 
 @media (prefers-color-scheme: dark) {
