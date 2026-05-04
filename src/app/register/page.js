@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-  //creating form
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -35,20 +35,31 @@ export default function RegisterPage() {
       setError(data.error || 'Registration failed');
     }
   };
-//JSX for form 
+
   return (
-    <div>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <input name="first_name" placeholder="First Name" onChange={handleChange} required />
-        <input name="last_name" placeholder="Last Name" onChange={handleChange} required />
-        <input name="phone" placeholder="Phone" onChange={handleChange} required />
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required  />
-        <input name="password" type="password" placeholder="Password (min 6 characters)" onChange={handleChange} required  />
-        <button type="submit">Register</button>
-      </form>
-      {error && <p>{error}</p>}
-      <p>Already have an account? <Link href="/login">Login</Link></p>
+    <div className="wrap" style={{ display: 'grid', placeItems: 'center', minHeight: '90vh', padding: '2rem 1.5rem' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '450px' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Create Account</h1>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <input name="first_name" placeholder="First Name" onChange={handleChange} required />
+            <input name="last_name" placeholder="Last Name" onChange={handleChange} required />
+          </div>
+          <input name="phone" placeholder="Phone Number" onChange={handleChange} required />
+          <input name="email" type="email" placeholder="Email Address" onChange={handleChange} required />
+          <input name="password" type="password" placeholder="Password (min 6 characters)" onChange={handleChange} required />
+          
+          <button type="submit" className="btn">
+            Join
+          </button>
+        </form>
+        
+        {error && <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>{error}</p>}
+        
+        <p style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          Already have an account? <Link href="/login" style={{ color: 'var(--primary)', fontWeight: '600' }}>Login</Link>
+        </p>
+      </div>
     </div>
   );
 }
