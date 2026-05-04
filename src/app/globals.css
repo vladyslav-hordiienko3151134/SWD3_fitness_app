@@ -119,6 +119,15 @@ input {
   width: 100%;
 }
 
+main {
+  padding-top: 80px;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
