@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -33,26 +34,44 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         {!loading && (
-          <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', background: '#333', color: 'white', alignItems: 'center' }}>
-            {pathname !== '/' && (
-              <Link href="/" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>Home</Link>
-            )}
-            <Link href="/events" style={{ color: 'white', textDecoration: 'none' }}>Events</Link>
-            {user?.role === 'organizer' && <Link href="/events/create" style={{ color: 'white', textDecoration: 'none' }}>Create Event</Link>}
-            {user?.role === 'user' && <Link href="/my-booking" style={{ color: 'white', textDecoration: 'none' }}>My booking</Link>}
-            {user?.role === 'admin' && (
-              <>
-                <Link href="/admin/users" style={{ color: 'white', textDecoration: 'none' }}>Manage Users</Link>
-                <Link href="/admin/bookings" style={{ color: 'white', textDecoration: 'none' }}>All Bookings</Link>
-              </>
-            )}
-            <span style={{ marginLeft: 'auto' }}>
-              Hello, {user?.first_name} ({user?.role})
-            </span>
-            <button onClick={handleLogout}>Logout</button>
+          <nav className="navbar">
+            <div className="wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <Link href="/" style={{ fontFamily: 'Outfit', fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '28px', height: '28px', background: 'var(--primary)', borderRadius: '6px', display: 'grid', placeItems: 'center', color: 'white', fontSize: '0.9rem' }}>F</div>
+                  FITNESS
+                </Link>
+                
+                <div style={{ display: 'flex', gap: '1.5rem' }}>
+                  <Link href="/events" style={{ fontSize: '0.9rem', color: pathname === '/events' ? 'var(--primary)' : 'var(--text-secondary)' }}>Events</Link>
+                  {user?.role === 'organizer' && <Link href="/events/create" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Create</Link>}
+                  {user?.role === 'user' && <Link href="/my-booking" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>My Bookings</Link>}
+                  {user?.role === 'admin' && (
+                    <>
+                      <Link href="/admin/users" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Users</Link>
+                      <Link href="/admin/bookings" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>All Bookings</Link>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {user ? user.first_name : 'Guest'}
+                </span>
+                {user ? (
+                  <button className="btn-alt" onClick={handleLogout}>Logout</button>
+                ) : (
+                  <Link href="/login" className="btn">Login</Link>
+                )}
+              </div>
+            </div>
           </nav>
         )}
         <main>{children}</main>
+        <footer className="wrap" style={{ padding: '3rem 0', borderTop: '1px solid var(--border)', marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+          &copy; 2026 Fitness Booking App.
+        </footer>
       </body>
     </html>
   );
