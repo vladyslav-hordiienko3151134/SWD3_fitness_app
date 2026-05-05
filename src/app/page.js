@@ -108,6 +108,51 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      <div style={{ marginBottom: '8rem' }}>
+        <h2 style={{ fontSize: '2.5rem', marginBottom: '3.5rem', textAlign: 'center' }}>Meet Our <span className="neon">Coaches</span></h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem' }}>
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div style={{ width: '120px', height: '120px', borderRadius: '60px', overflow: 'hidden', margin: '0 auto 1.5rem', border: '2px solid var(--primary)' }}>
+              <img 
+                src="/images/coach1.jpeg" 
+                alt="Cristiano Ronaldo" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.style.background = 'var(--surface-alt)';
+                  e.target.parentElement.innerHTML = '<div style="display:grid;place-items:center;height:100%;font-weight:800;color:var(--primary)">CR7</div>';
+                }}
+              />
+            </div>
+            <h3 style={{ fontSize: '1.6rem', marginBottom: '0.5rem' }}>Cristiano Ronaldo</h3>
+            <p style={{ color: 'var(--accent)', fontWeight: '700', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '1rem' }}>Elite Performance Coach</p>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              Widely recognized as the best coach in the industry. Cristiano brings unmatched discipline and a winning mentality to every training session
+            </p>
+          </div>
+
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div style={{ width: '120px', height: '120px', borderRadius: '60px', overflow: 'hidden', margin: '0 auto 1.5rem', border: '2px solid var(--border)' }}>
+              <img 
+                src="/images/coach2.jpeg" 
+                alt="Lionel Messi" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.style.background = 'var(--surface-alt)';
+                  e.target.parentElement.innerHTML = '<div style="display:grid;place-items:center;height:100%;font-weight:800;color:var(--text-secondary)">LM10</div>';
+                }}
+              />
+            </div>
+            <h3 style={{ fontSize: '1.6rem', marginBottom: '0.5rem' }}>Lionel Messi</h3>
+            <p style={{ color: '#ef4444', fontWeight: '700', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '1rem' }}>Junior Assistant</p>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              Often considered the worst coach on our team. Leo is mostly here for moral support and occasionally forgets where the dumbbells are
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
