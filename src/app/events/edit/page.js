@@ -43,20 +43,76 @@ export default function EditEventPage() {
 
 //JSX 
   return (
-    <div>
-      <h1>Edit event:</h1>
-      <form onSubmit={handleSubmit}>
-        <input name="title" value={form.title || ''} onChange={handleChange} required />
-        <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" />
-        <input name="instructor_name" value={form.instructor_name || ''} onChange={handleChange} required />
-        <input name="event_date" type="date" value={form.event_date || ''} onChange={handleChange} required />
-        <input name="start_time" type="time" value={form.start_time || ''} onChange={handleChange} required />
-        <input name="end_time" type="time" value={form.end_time || ''} onChange={handleChange} required />
-        <input name="location" value={form.location || ''} onChange={handleChange} required />
-        <input name="capacity" type="number" value={form.capacity || ''} onChange={handleChange} required />
-        <button type="submit">Update event</button>
-      </form>
-      {error && <p>{error}</p>}
+    <div className="wrap" style={{ display: 'grid', placeItems: 'center', minHeight: '90vh', padding: '4rem 1.5rem' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '600px' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '2.5rem', fontSize: '2.25rem' }}>Edit <span className="neon">Event</span></h1>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Title</label>
+            <input name="title" value={form.title || ''} onChange={handleChange} required />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Description</label>
+            <textarea 
+              name="description" 
+              value={form.description || ''} 
+              onChange={handleChange} 
+              rows="4"
+              style={{ 
+                width: '100%', 
+                padding: '1rem', 
+                borderRadius: '12px', 
+                background: 'var(--surface-alt)', 
+                border: '1px solid var(--border)', 
+                color: 'white',
+                fontFamily: 'inherit',
+                fontSize: '1.1rem',
+                outline: 'none',
+                resize: 'none'
+              }}
+            />
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Instructor</label>
+            <input name="instructor_name" value={form.instructor_name || ''} onChange={handleChange} required />
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Date</label>
+              <input name="event_date" type="date" value={form.event_date || ''} onChange={handleChange} required />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Start</label>
+              <input name="start_time" type="time" value={form.start_time || ''} onChange={handleChange} required />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>End</label>
+              <input name="end_time" type="time" value={form.end_time || ''} onChange={handleChange} required />
+            </div>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Location</label>
+              <input name="location" value={form.location || ''} onChange={handleChange} required />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>Capacity</label>
+              <input name="capacity" type="number" value={form.capacity || ''} onChange={handleChange} required />
+            </div>
+          </div>
+          
+          <button type="submit" className="btn" style={{ padding: '1rem', marginTop: '1rem' }}>
+            Update Changes
+          </button>
+        </form>
+        
+        {error && <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem' }}>{error}</p>}
+      </div>
     </div>
   );
 }
