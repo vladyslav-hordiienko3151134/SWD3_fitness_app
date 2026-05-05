@@ -51,6 +51,9 @@ export default function EventsPage() {
       const err = await res.json();
       setMessage(err.error || 'Booking failed');
     }
+    
+    // clear message after 2 seconds
+    setTimeout(() => setMessage(''), 2000);
   };
 
   // deleting event
