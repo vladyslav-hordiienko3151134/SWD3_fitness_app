@@ -43,13 +43,13 @@ export default function RootLayout({ children }) {
                 </Link>
                 
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
-                  <Link href="/events" style={{ fontSize: '0.9rem', color: pathname === '/events' ? 'var(--primary)' : 'var(--text-secondary)' }}>Events</Link>
-                  {user?.role === 'organizer' && <Link href="/events/create" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Create</Link>}
-                  {user?.role === 'user' && <Link href="/my-booking" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>My Bookings</Link>}
+                  <Link href="/events" style={{ fontSize: '0.9rem', color: pathname.startsWith('/events') ? 'var(--primary)' : 'var(--text-secondary)' }}>Events</Link>
+                  {user?.role === 'organizer' && <Link href="/events/create" style={{ fontSize: '0.9rem', color: pathname === '/events/create' ? 'var(--primary)' : 'var(--text-secondary)' }}>Create</Link>}
+                  {user?.role === 'user' && <Link href="/my-booking" style={{ fontSize: '0.9rem', color: pathname === '/my-booking' ? 'var(--primary)' : 'var(--text-secondary)' }}>My Bookings</Link>}
                   {user?.role === 'admin' && (
                     <>
-                      <Link href="/admin/users" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Users</Link>
-                      <Link href="/admin/bookings" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>All Bookings</Link>
+                      <Link href="/admin/users" style={{ fontSize: '0.9rem', color: pathname === '/admin/users' ? 'var(--primary)' : 'var(--text-secondary)' }}>Users</Link>
+                      <Link href="/admin/bookings" style={{ fontSize: '0.9rem', color: pathname === '/admin/bookings' ? 'var(--primary)' : 'var(--text-secondary)' }}>All Bookings</Link>
                     </>
                   )}
                 </div>
