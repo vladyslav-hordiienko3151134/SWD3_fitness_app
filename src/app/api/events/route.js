@@ -15,11 +15,10 @@ export async function GET(request) {
                 SELECT 
                     class_id as event_id,
                     title,
-                    description,
                     start_time as event_date_time,
                     DATE(start_time) as event_date,
                     TIME(start_time) as start_time,
-                    TIME(end_time) as end_time,
+                    end_time,
                     location,
                     trainer_name as instructor_name,
                     max_capacity as capacity,
@@ -47,11 +46,10 @@ export async function GET(request) {
             SELECT 
                 class_id as event_id,
                 title,
-                description,
                 start_time as event_date_time,
                 DATE(start_time) as event_date,
                 TIME(start_time) as start_time,
-                TIME(end_time) as end_time,
+                end_time,
                 location,
                 trainer_name as instructor_name,
                 max_capacity as capacity,
@@ -98,19 +96,16 @@ export async function POST(request) {
         const connection = await pool.getConnection();
         
         // Combine date and time for start_time
-        const startTime = body.start_time.length === 5 ? `${body.start_time}:00` : body.start_time;
-        const endTime = body.end_time.length === 5 ? `${body.end_time}:00` : body.end_time;
-        const startDateTime = `${body.event_date} ${startTime}`;
-        const endDateTime = `${body.event_date} ${endTime}`;
+        const startDateTime = `${body.event_date} ${body.start_time}:00`;
+        const endDateTime = `${body.event_date} ${body.end_time}:00`;
 
         //inserting event into fitness_classes table
         const [result] = await connection.execute(
             `INSERT INTO fitness_classes
-             (title, description, start_time, end_time, location, trainer_name, max_capacity, current_bookings)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+             (title, start_time, end_time, location, trainer_name, max_capacity, current_bookings)
+             VALUES (?, ?, ?, ?, ?, ?, 0)`,
             [
                 body.title,
-                body.description,
                 startDateTime,
                 endDateTime,
                 body.location,
@@ -124,10 +119,9 @@ export async function POST(request) {
             `SELECT 
                 class_id as event_id,
                 title,
-                description,
                 DATE(start_time) as event_date,
                 TIME(start_time) as start_time,
-                TIME(end_time) as end_time,
+                end_time,
                 location,
                 trainer_name as instructor_name,
                 max_capacity as capacity
@@ -198,22 +192,19 @@ export async function PUT(request) {
                 query_values.push(request_body.title);
             }
             if (request_body.description !== undefined) {
-                update_fields.push('description = ?');
-                query_values.push(request_body.description);
+                // description doesn't exist in fitness_classes, skip
             }
             if (request_body.instructor_name !== undefined) {
                 update_fields.push('trainer_name = ?');
                 query_values.push(request_body.instructor_name);
             }
             if (request_body.event_date !== undefined && request_body.start_time !== undefined) {
-                const startTime = request_body.start_time.length === 5 ? `${request_body.start_time}:00` : request_body.start_time;
-                const newDateTime = `${request_body.event_date} ${startTime}`;
+                const newDateTime = `${request_body.event_date} ${request_body.start_time}:00`;
                 update_fields.push('start_time = ?');
                 query_values.push(newDateTime);
             }
             if (request_body.end_time !== undefined && request_body.event_date !== undefined) {
-                const endTime = request_body.end_time.length === 5 ? `${request_body.end_time}:00` : request_body.end_time;
-                const newEndDateTime = `${request_body.event_date} ${endTime}`;
+                const newEndDateTime = `${request_body.event_date} ${request_body.end_time}:00`;
                 update_fields.push('end_time = ?');
                 query_values.push(newEndDateTime);
             }
@@ -248,10 +239,9 @@ export async function PUT(request) {
                 `SELECT 
                     class_id as event_id,
                     title,
-                    description,
                     DATE(start_time) as event_date,
                     TIME(start_time) as start_time,
-                    TIME(end_time) as end_time,
+                    end_time,
                     location,
                     trainer_name as instructor_name,
                     max_capacity as capacity,
