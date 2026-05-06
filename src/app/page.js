@@ -62,20 +62,24 @@ export default function Home() {
                 </div>
               </Link>
 
-              {user ? (
+              {user && user.role !== 'admin' && (
                 <>
                   {/*Links for logged in users*/}
                   <Link href="/my-booking" className="card">
                     <h3 style={{ fontSize: '1.6rem', marginBottom: '1rem' }}>Personal Schedule</h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '2rem', lineHeight: '1.6' }}>
-                      Manage your upcoming bookings and track your consistency across all your favorite classes.
+                      {user.role === 'organizer' 
+                        ? 'Manage your upcoming classes and track your teaching schedule across the gym.'
+                        : 'Manage your upcoming bookings and track your consistency across all your favorite classes.'}
                     </p>
                     <div style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Dashboard →
+                      {user.role === 'organizer' ? 'My Schedule →' : 'Dashboard →'}
                     </div>
                   </Link>
                 </>
-              ) : (
+              )}
+
+              {!user && (
                 <>
                   {/*Links for guests*/}
                   <Link href="/login" className="card">

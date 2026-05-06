@@ -97,7 +97,9 @@ export default function EventsPage() {
 
               <div style={{ marginBottom: '2rem', fontSize: '0.9rem' }}>
                 <div style={{ marginBottom: '0.5rem' }}>📍 {event.location}</div>
-                <div style={{ marginBottom: '0.5rem' }}>📅 {event.event_date} @ {event.start_time}</div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  📅 {new Date(event.event_date).toLocaleDateString('en-GB')} at {event.start_time?.substring(0, 5)}
+                </div>
                 <div style={{ color: isFullyBooked ? '#ef4444' : 'var(--accent)' }}>
                   {isFullyBooked ? 'Fully Booked' : `${event.capacity - event.current_bookings} spots left`}
                 </div>
@@ -117,9 +119,23 @@ export default function EventsPage() {
                 )}
 
                 {(user?.role === 'organizer' || user?.role === 'admin') && (
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-                    <Link href={`/events/edit?id=${event.event_id}`} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Edit</Link>
-                    <button onClick={() => handleDelete(event.event_id)} style={{ background: 'transparent', color: '#ef4444', fontSize: '0.8rem' }}>Delete</button>
+                  <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', alignItems: 'center' }}>
+                    <Link href={`/events/edit?id=${event.event_id}`} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', transition: 'color 0.2s' }}>Edit</Link>
+                    <button 
+                      onClick={() => handleDelete(event.event_id)} 
+                      style={{ 
+                        background: 'transparent', 
+                        color: '#ef4444', 
+                        fontSize: '0.85rem', 
+                        padding: 0, 
+                        border: 'none', 
+                        fontWeight: '500',
+                        minWidth: 'auto',
+                        height: 'auto'
+                      }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 )}
               </div>
