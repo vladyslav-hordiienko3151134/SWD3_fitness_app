@@ -16,8 +16,15 @@ export default function EditEventPage() {
       fetch(`/api/events?id=${id}`)
         .then(res => res.json())
         .then(data => {
-          if (data.event) setForm(data.event);
-          else setError(data.error || 'Event not found');
+          if (data.event) {
+            // format date for input
+            if (data.event.event_date) {
+              data.event.event_date = new Date(data.event.event_date).toISOString().split('T')[0];
+            }
+            setForm(data.event);
+          } else {
+            setError(data.error || 'Event not found');
+          }
         });
     }
   }, [id]);
