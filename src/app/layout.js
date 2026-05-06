@@ -43,7 +43,7 @@ export default function RootLayout({ children }) {
                 </Link>
                 
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
-                  <Link href="/events" style={{ fontSize: '0.9rem', color: pathname.startsWith('/events') ? 'var(--primary)' : 'var(--text-secondary)' }}>Events</Link>
+                  <Link href="/events" style={{ fontSize: '0.9rem', color: (pathname.startsWith('/events') && pathname !== '/events/create') ? 'var(--primary)' : 'var(--text-secondary)' }}>Events</Link>
                   {user?.role === 'organizer' && <Link href="/events/create" style={{ fontSize: '0.9rem', color: pathname === '/events/create' ? 'var(--primary)' : 'var(--text-secondary)' }}>Create</Link>}
                   {(user?.role === 'user' || user?.role === 'organizer') && (
                     <Link href="/my-booking" style={{ fontSize: '0.9rem', color: pathname === '/my-booking' ? 'var(--primary)' : 'var(--text-secondary)' }}>
