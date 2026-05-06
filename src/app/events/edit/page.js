@@ -16,7 +16,20 @@ export default function EditEventPage() {
       fetch(`/api/events?id=${id}`)
         .then(res => res.json())
         .then(data => {
-          if (data.event) setForm(data.event);
+          if (data.event) {
+            // format date to YYYY-MM-DD
+            if (data.event.event_date) {
+              data.event.event_date = String(data.event.event_date).split('T')[0];
+            }
+            // format times to HH:mm
+            if (data.event.start_time) {
+              data.event.start_time = String(data.event.start_time).slice(0, 5);
+            }
+            if (data.event.end_time) {
+              data.event.end_time = String(data.event.end_time).slice(0, 5);
+            }
+            setForm(data.event);
+          }
           else setError(data.error || 'Event not found');
         });
     }
