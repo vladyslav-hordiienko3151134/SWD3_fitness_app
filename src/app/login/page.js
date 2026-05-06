@@ -22,7 +22,11 @@ export default function LoginPage() {
     const data = await res.json();
 
     if (res.ok) {
-      window.location.href = '/my-booking';
+      if (data.user.role === 'admin') {
+        window.location.href = '/admin/users';
+      } else {
+        window.location.href = '/my-booking';
+      }
     } else {
       setError(data.error || 'Login failed');
     }

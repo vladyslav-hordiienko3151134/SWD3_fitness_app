@@ -179,10 +179,9 @@ export async function PUT(request) {
             }
             const existing_event = found_events[0];
 
-            // only organisers can edit their own events
-            //admin can edit all events (created_by doesn't exist in fitness_classes, so admin only)
-            if (session.role !== 'admin') {
-                return NextResponse.json({ error: 'Admin access required to edit' }, { status: 403 });
+            // only organisers and admins can edit
+            if (session.role !== 'admin' && session.role !== 'organizer') {
+                return NextResponse.json({ error: 'Admin or Organizer access required to edit' }, { status: 403 });
             }
 
             const update_fields = [];
