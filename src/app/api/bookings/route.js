@@ -41,6 +41,27 @@ export async function GET(request) {
                          JOIN fitness_classes fc ON b.class_id = fc.class_id
                          JOIN users u ON b.user_id = u.user_id
                          ORDER BY fc.start_time DESC`;
+            } else if (session.role === 'organizer') {
+                // For organizers, show classes they are teaching
+                const [userRows] = await connection.execute(
+                    'SELECT first_name, last_name FROM users WHERE user_id = ?',
+                    [session.user_id]
+                );
+                const fullName = userRows.length > 0 ? `${userRows[0].first_name} ${userRows[0].last_name}` : '';
+                
+                query = `SELECT 
+                                fc.class_id as booking_id,
+                                fc.title,
+                                DATE(fc.start_time) as event_date,
+                                TIME(fc.start_time) as start_time,
+                                fc.end_time,
+                                fc.location,
+                                fc.trainer_name as instructor_name,
+                                'confirmed' as status
+                         FROM fitness_classes fc
+                         WHERE fc.trainer_name = ? AND fc.start_time >= NOW()
+                         ORDER BY fc.start_time ASC`;
+                params = [fullName];
             } else {
                 query = `SELECT b.*,
                                 fc.title,
@@ -75,6 +96,10 @@ export async function POST(request) {
         const { session } = getSessionFromRequest(request);
         if (!session) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+
+                if (session.role !== 'user') {
+            return NextResponse.json({ error: 'Only regular users can book classes' }, { status: 403 });
         }
 
         const body = await request.json();
