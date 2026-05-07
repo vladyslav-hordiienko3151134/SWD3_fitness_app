@@ -50,6 +50,11 @@ export default function RootLayout({ children }) {
                       {user.role === 'organizer' ? 'My Schedule' : 'My Bookings'}
                     </Link>
                   )}
+                  {user && (
+                    <Link href="/profile" style={{ fontSize: '0.9rem', color: pathname === '/profile' ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                      Profile
+                    </Link>
+                  )}
                   {user?.role === 'admin' && (
                     <>
                       <Link href="/admin/users" style={{ fontSize: '0.9rem', color: pathname === '/admin/users' ? 'var(--primary)' : 'var(--text-secondary)' }}>Users</Link>
