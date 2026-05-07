@@ -18,8 +18,68 @@ export async function GET(request) {
 
   //get search query from URL parameter
   const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('id');
   const searchQuery = searchParams.get('q');
 
+  //if ID is provided, return specific user with their bookings
+  if (userId) {
+    try {
+      const connection = await pool.getConnection();
+      
+      //fetch user profile
+      const [users] = await connection.execute(
+        `SELECT user_id, first_name, last_name, email, phone, role, created_at 
+         FROM users WHERE user_id = ?`,
+        [userId]
+      );
+      //in case no user with such id
+      if (users.length === 0) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
+      }
+
+      //fetch user's bookings
+      const [bookings] = await connection.execute(
+        `SELECT 
+          b.booking_id,
+          b.status,
+          b.booked_at,
+          fc.class_id,
+          fc.title,
+          fc.start_time,
+          fc.end_time,
+          fc.location,
+          fc.trainer_name as instructor_name,
+          DATE(fc.start_time) as event_date,
+          TIME(fc.start_time) as start_time,
+          TIME(fc.end_time) as end_time
+         FROM bookings b
+         JOIN fitness_classes fc ON b.class_id = fc.class_id
+         WHERE b.user_id = ?
+         ORDER BY fc.start_time DESC`,
+        [userId]
+      );
+
+      connection.release();
+
+      return NextResponse.json({
+        user: users[0],
+        bookings: bookings,
+        total_bookings: bookings.length
+      });
+
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      return NextResponse.json(
+        { error: 'Server error' },
+        { status: 500 }
+      );
+    }
+  }
+
+//if no ID entered display all users
 try {
     let query = 'SELECT user_id, first_name, last_name, email, phone, role, created_at FROM users';
     let params = [];
