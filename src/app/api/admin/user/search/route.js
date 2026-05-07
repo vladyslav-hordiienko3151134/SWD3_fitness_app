@@ -41,7 +41,7 @@ export async function GET(request) {
       }
 
       //fetch user's bookings
-      const [bookings] = await connection.execute(
+        const [bookings] = await connection.execute(
         `SELECT 
           b.booking_id,
           b.status,
@@ -51,10 +51,7 @@ export async function GET(request) {
           fc.start_time,
           fc.end_time,
           fc.location,
-          fc.trainer_name as instructor_name,
-          DATE(fc.start_time) as event_date,
-          TIME(fc.start_time) as start_time,
-          TIME(fc.end_time) as end_time
+          fc.trainer_name as instructor_name
          FROM bookings b
          JOIN fitness_classes fc ON b.class_id = fc.class_id
          WHERE b.user_id = ?

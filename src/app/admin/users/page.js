@@ -15,6 +15,11 @@ export default function AdminUsersPage() {
     role: 'user',
   });
   const [error, setError] = useState('');
+  //search and modal states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [viewingDetails, setViewingDetails] = useState(false);
+  const [userBookings, setUserBookings] = useState([]);
 
   // fetching all users from backend 
   const fetchUsers = async () => {
@@ -93,10 +98,76 @@ export default function AdminUsersPage() {
       alert('Delete failed, try again');
     }
   };
+  //search user by name or email
+  const searchUsers = async () => {
+    if (!searchTerm.trim()) {
+      fetchUsers();
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/user/search?q=${encodeURIComponent(searchTerm)}`);
+      if (!res.ok) throw new Error('Error');
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //view user details with their bookings
+  const viewUserBookings = async (userId) => {
+    try {
+      const res = await fetch(`/api/admin/user/search?id=${userId}`);
+      const data = await res.json();
+      if (res.ok) {
+        setSelectedUser(data.user);
+        setUserBookings(data.bookings || []);
+        setViewingDetails(true);
+      } else {
+        alert(data.error || 'Failed to load user details');
+      }
+    } catch (err) {
+      alert('Error loading user details');
+    }
+  };
+
+  //handle Enter key for search
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      searchUsers();
+    }
+  };
 
   return (
     <div className="wrap" style={{ paddingTop: '4rem' }}>
       <h1 className="title" style={{ marginBottom: '3rem' }}>Admin <span className="neon">Panel</span></h1>
+
+      <section className="card" style={{ marginBottom: '2rem' }}>
+        <h2 style={{ marginBottom: '1rem', fontSize: '1.3rem' }}>Search Users</h2>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={handleKeyPress}
+            style={{ flex: 1, minWidth: '200px' }}
+          />
+          <button className="btn" onClick={searchUsers}>
+            Search
+          </button>
+          <button className="btn-alt" onClick={() => {
+            setSearchTerm('');
+            fetchUsers();
+          }}>
+            Reset
+          </button>
+        </div>
+      </section>
 
       <section className="card" style={{ marginBottom: '4rem' }}>
         <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem' }}>Create new user</h2>
@@ -223,6 +294,8 @@ export default function AdminUsersPage() {
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button className="btn-alt" onClick={() => setEditing(user)} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>Edit</button>
                           <button className="btn-alt" onClick={() => handleDelete(user.user_id)} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', color: '#ef4444' }}>Delete</button>
+                  
+                          <button className="btn-alt" onClick={() => viewUserBookings(user.user_id)} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', color: 'var(--accent)' }}>View Booking</button>
                         </div>
                       </td>
                     </>
@@ -232,7 +305,144 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-      </section>
+              </section>
+
+      {/* ADDED: MODAL for viewing user bookings */}
+      {viewingDetails && selectedUser && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setViewingDetails(false)}>
+          <div style={{
+            background: 'var(--surface)',
+            borderRadius: '24px',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '85vh',
+            overflow: 'auto',
+            padding: '2rem'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem' }}>
+                {selectedUser.first_name} {selectedUser.last_name}
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                  (#{selectedUser.user_id})
+                </span>
+              </h2>
+              <button 
+                onClick={() => setViewingDetails(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* User Info Summary */}
+            <div style={{ 
+              background: 'var(--surface-alt)', 
+              borderRadius: '16px', 
+              padding: '1rem',
+              marginBottom: '1.5rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem'
+            }}>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Email</div>
+                <div>{selectedUser.email}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Phone</div>
+                <div>{selectedUser.phone || '—'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Role</div>
+                <div>{selectedUser.role}</div>
+              </div>
+              {/* FIXED: Removed created_at if it doesn't exist - shows registration date only if available */}
+              {selectedUser.created_at && (
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Member Since</div>
+                  <div>{new Date(selectedUser.created_at).toLocaleDateString()}</div>
+                </div>
+              )}
+            </div>
+
+                        {/* Bookings Table */}
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>
+              Bookings ({userBookings.length})
+            </h3>
+            
+            {userBookings.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p style={{ color: 'var(--text-secondary)' }}>This user has no bookings yet.</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                      <th style={{ padding: '0.75rem' }}>Event</th>
+                      <th style={{ padding: '0.75rem' }}>Date & Time</th>
+                      <th style={{ padding: '0.75rem' }}>Location</th>
+                      <th style={{ padding: '0.75rem' }}>Instructor</th>
+                      <th style={{ padding: '0.75rem' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userBookings.map(booking => (
+                      <tr key={booking.booking_id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.75rem' }}>{booking.title}</td>
+                        <td style={{ padding: '0.75rem' }}>
+                          {booking.start_time ? new Date(booking.start_time).toLocaleString() : '—'}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>{booking.location || '—'}</td>
+                        <td style={{ padding: '0.75rem' }}>{booking.instructor_name || '—'}</td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{ 
+                            padding: '0.2rem 0.5rem', 
+                            borderRadius: '9999px', 
+                            background: booking.status === 'confirmed' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                            color: booking.status === 'confirmed' ? 'var(--accent)' : '#ef4444',
+                            fontSize: '0.7rem'
+                          }}>
+                            {booking.status || '—'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Close button */}
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <button className="btn-alt" onClick={() => setViewingDetails(false)} style={{ padding: '0.5rem 1.5rem' }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
