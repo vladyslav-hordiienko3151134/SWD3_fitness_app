@@ -16,17 +16,29 @@ export async function GET(request) {
     );
   }
 
-  try {
-    //getting all users from databas
-    const [allUsers] = await pool.query(
-      'SELECT user_id, first_name, last_name, email, phone, role, created_at FROM users ORDER BY user_id'
-    );//query
+  //get search query from URL parameter
+  const { searchParams } = new URL(request.url);
+  const searchQuery = searchParams.get('q');
+
+try {
+    let query = 'SELECT user_id, first_name, last_name, email, phone, role, created_at FROM users';
+    let params = [];
+
+    //if search query exists - filter by name or email
+    if (searchQuery && searchQuery.trim() !== '') {
+      query += ' WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ?';
+      const searchPattern = `%${searchQuery}%`;
+      params = [searchPattern, searchPattern, searchPattern];
+    }
+
+    query += ' ORDER BY user_id';
     
+    const [allUsers] = await pool.query(query, params);
     //send  list of users back to frontend
     return NextResponse.json({ users: allUsers });
     
   } catch (error) {
-    //if anything crashe - error message
+    //if anything crash - error message
     console.error('error getting users:', error);
     return NextResponse.json(
       { message: 'server error' },
