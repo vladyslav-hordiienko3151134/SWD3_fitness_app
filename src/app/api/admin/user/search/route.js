@@ -21,7 +21,7 @@ export async function GET(request) {
   const userId = searchParams.get('id');
   const searchQuery = searchParams.get('q');
 
-  //if ID is provided, return specific user with their bookings
+    //if ID is provided return specific user with their bookings
   if (userId) {
     try {
       const connection = await pool.getConnection();
@@ -32,8 +32,10 @@ export async function GET(request) {
          FROM users WHERE user_id = ?`,
         [userId]
       );
+      
       //in case no user with such id
       if (users.length === 0) {
+        connection.release();
         return NextResponse.json(
           { error: 'User not found' },
           { status: 404 }
@@ -41,11 +43,10 @@ export async function GET(request) {
       }
 
       //fetch user's bookings
-        const [bookings] = await connection.execute(
+      const [bookings] = await connection.execute(
         `SELECT 
           b.booking_id,
           b.status,
-          b.booked_at,
           fc.class_id,
           fc.title,
           fc.start_time,
@@ -70,7 +71,7 @@ export async function GET(request) {
     } catch (error) {
       console.error('Error fetching user details:', error);
       return NextResponse.json(
-        { error: 'Server error' },
+        { error: 'Server error: ' + error.message },
         { status: 500 }
       );
     }
