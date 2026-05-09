@@ -40,14 +40,14 @@ export default function RegisterPage() {
     <div className="wrap" style={{ display: 'grid', placeItems: 'center', minHeight: '90vh', padding: '2rem 1.5rem' }}>
       <div className="card" style={{ width: '100%', maxWidth: '450px' }}>
         <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Create Account</h1>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <input name="first_name" placeholder="First Name" onChange={handleChange} required />
-            <input name="last_name" placeholder="Last Name" onChange={handleChange} required />
+            <input name="first_name" placeholder="First Name" onChange={handleChange} />
+            <input name="last_name" placeholder="Last Name" onChange={handleChange} />
           </div>
-          <input name="phone" placeholder="Phone Number" onChange={handleChange} required />
-          <input name="email" type="email" placeholder="Email Address" onChange={handleChange} required />
-          <input name="password" type="password" placeholder="Password (min 6 characters)" onChange={handleChange} required />
+          <input name="phone" placeholder="Phone Number" onChange={handleChange} />
+          <input name="email" type="email" placeholder="Email Address" onChange={handleChange} />
+          <input name="password" type="password" placeholder="Password (min 6 characters)" onChange={handleChange} />
           
           <button type="submit" className="btn">
             Join

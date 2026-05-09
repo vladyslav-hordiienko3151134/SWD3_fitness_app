@@ -12,7 +12,8 @@ export async function POST(request) {
     //validation
     const { isValid, errors } = validateUser(body);
     if (!isValid) {
-      return NextResponse.json({ error: 'Validation failed', details: errors }, { status: 400 });
+      const firstError = Object.values(errors)[0];
+      return NextResponse.json({ error: firstError, details: errors }, { status: 400 });
     }
 
     //check if user exists

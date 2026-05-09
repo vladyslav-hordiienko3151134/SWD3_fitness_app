@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest } from '@/lib/session';
 import pool from '@/lib/db';
-import { hashPassword } from '@/lib/validation';
+import { validateUser, hashPassword } from '@/lib/validation';
 
 export async function GET(request) {
   try {
@@ -57,7 +57,15 @@ export async function PUT(request) {
     }
 
     //updated fields from request body
-    const { first_name, last_name, phone, email, password } = await request.json();
+    const body = await request.json();
+    const { first_name, last_name, phone, email, password } = body;
+
+    //validation
+    const { isValid, errors } = validateUser(body, true);
+    if (!isValid) {
+      const firstError = Object.values(errors)[0];
+      return NextResponse.json({ error: firstError, details: errors }, { status: 400 });
+    }
 
     //dynamic update query
     const updateFields = [];

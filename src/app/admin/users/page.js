@@ -171,18 +171,16 @@ export default function AdminUsersPage() {
 
       <section className="card" style={{ marginBottom: '4rem' }}>
         <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem' }}>Create new user</h2>
-        <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+        <form onSubmit={handleCreate} noValidate style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
           <input
             placeholder="First name"
             value={form.first_name}
             onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-            required
           />
           <input
             placeholder="Last name"
             value={form.last_name}
             onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-            required
           />
           <input
             placeholder="Phone"
@@ -194,14 +192,12 @@ export default function AdminUsersPage() {
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
           />
           <input
             placeholder="Password"
             type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
           />
           <select
             value={form.role}

@@ -195,7 +195,7 @@ export default function ProfilePage() {
           <>
             <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem' }}>Edit Profile</h2>
             
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>
@@ -205,7 +205,6 @@ export default function ProfilePage() {
                     name="first_name"
                     value={form.first_name}
                     onChange={handleChange}
-                    required
                   />
                 </div>
 
@@ -217,7 +216,6 @@ export default function ProfilePage() {
                     name="last_name"
                     value={form.last_name}
                     onChange={handleChange}
-                    required
                   />
                 </div>
 
@@ -230,7 +228,6 @@ export default function ProfilePage() {
                     type="email"
                     value={form.email}
                     onChange={handleChange}
-                    required
                   />
                 </div>
 

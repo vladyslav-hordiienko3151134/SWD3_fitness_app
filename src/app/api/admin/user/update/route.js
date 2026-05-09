@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/session';
-import { hashPassword } from '@/lib/validation';
+import { hashPassword, validateUser } from '@/lib/validation';
 
 export async function PUT(request) {
   //check whether admin is logged in, by geting session data from cookie that browser sent us
@@ -23,7 +23,15 @@ export async function PUT(request) {
     const userId = searchParams.get('id');
     
      //get new user data from request body
-    const {first_name, last_name, phone, email, role, password} = await request.json();
+    const body = await request.json();
+    const {first_name, last_name, phone, email, role, password} = body;
+
+    //validation
+    const { isValid, errors } = validateUser(body, true);
+    if (!isValid) {
+      const firstError = Object.values(errors)[0];
+      return NextResponse.json({ message: firstError, details: errors }, { status: 400 });
+    }
 
     //check that user id  provided
     if (!userId) {

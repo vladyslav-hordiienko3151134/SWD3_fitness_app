@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSessionFromRequest } from '@/lib/session';
-import { hashPassword } from '@/lib/validation';
+import { hashPassword, validateUser } from '@/lib/validation';
 
 export async function POST(request) {
     //check if admin is logged in by geting session from cookie
@@ -18,22 +18,14 @@ export async function POST(request) {
   }
 
     //getting user data from request body (what admin typed in form)
-  const { first_name, last_name, phone, email, password, role } = await request.json();
+  const body = await request.json();
+  const { first_name, last_name, phone, email, password, role } = body;
 
-  //check all required fields are filled
-  if (!first_name || !last_name || !email || !password) {
-    return NextResponse.json(
-      { message: 'First name, last name, email and password required' },
-      { status: 400 }
-    );
-  }
-
-   //email addr check to have @ sign using pattern 
-  if (!email.match(/@/)) {
-    return NextResponse.json(
-      { message: 'Email must contain @' },
-      { status: 400 }
-    );
+  //validation
+  const { isValid, errors } = validateUser(body);
+  if (!isValid) {
+    const firstError = Object.values(errors)[0];
+    return NextResponse.json({ message: firstError, details: errors }, { status: 400 });
   }
 
   //checking if user with this email already in database
