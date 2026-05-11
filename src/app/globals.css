@@ -1,5 +1,7 @@
+/* fonts for big text and buttons, inter for body or inputs */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;600;700;800&display=swap');
 
+/* all main colours and spacing */
 :root {
   --background: #0a0c10;
   --surface: #161a22;
@@ -14,30 +16,53 @@
   --transition: all 0.2s ease-out;
 }
 
+/* global resets amd defaults */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
 h1, h2, h3, h4 {
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
 }
 
-.navbar {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  padding: 1rem 0;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
+img {
+  max-width: 100%;
+  display: block;
+}
+
+main {
+  padding-top: 80px;  
+}
+
+
+/* centre content */
 .wrap {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
 
+/* big page title that scales automatically */
 .title {
   font-family: 'Outfit', sans-serif;
   font-size: clamp(2.5rem, 6vw, 4rem);
@@ -45,12 +70,28 @@ h1, h2, h3, h4 {
   line-height: 1.1;
 }
 
+/* gradient text highlight */
 .neon {
   background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+/* cards */
+.card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 2.5rem;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* buttons */
 .btn, .btn-alt, button {
   font-family: 'Outfit', sans-serif !important;
   font-weight: 600 !important;
@@ -67,6 +108,7 @@ h1, h2, h3, h4 {
   white-space: nowrap;
 }
 
+/* primary buttons */
 .btn {
   background: var(--primary);
   color: white;
@@ -78,6 +120,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
 }
 
+/* secondary button */
 .btn-alt {
   background: transparent;
   border: 1px solid var(--border);
@@ -88,25 +131,28 @@ h1, h2, h3, h4 {
   background: var(--surface-alt);
 }
 
+/* bigger call-to-action button */
 .btn-big {
   font-size: 1.1rem !important;
   padding: 1rem 2.25rem !important;
   border-radius: 14px !important;
 }
 
-.card {
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 2.5rem;
-  border: 1px solid var(--border);
-  transition: var(--transition);
+/* navigation bar */
+.navbar {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem 0;
 }
 
-.card:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-}
-
+/* inputs */
 input {
   font-family: 'Inter', sans-serif;
   font-size: 1.1rem;
@@ -117,59 +163,4 @@ input {
   color: white;
   outline: none;
   width: 100%;
-}
-
-main {
-  padding-top: 80px;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  background-color: var(--background, #0a0c10);
-  color: var(--text-primary, #f8fafc);
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-body {
-  background-color: #0a0a0a;
-  color: #ededed;
-}
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }
